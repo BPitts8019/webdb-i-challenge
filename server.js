@@ -24,6 +24,20 @@ const validateAccountReq = (req, res, next) => {
    next();
 };
 
+const validateId = async (req, res, next) => {
+   try {
+      const account = await db("accounts").where("id", req.params.id).first();
+
+      if (!account) {
+         return res.status(404).json({message: "No record with that ID found"});
+      }
+
+      req.account = account;
+      next();
+   } catch (error) {
+      next(error);
+   }
+}
 
 server.get("/", (req, res, next) => {
    res.json({message: "Web DB-01 API Challenge"});
@@ -52,22 +66,17 @@ server.get("/api/accounts", async (req, res, next) => {
    }
 });
 
-server.get("/api/accounts/:id", async (req, res, next) => {
+server.get("/api/accounts/:id", validateId, async (req, res, next) => {
    try {
-      const account = await db("accounts").where("id", req.params.id).first();
-
-      if (!account) {
-         return res.status(404).json({message: "No record with that ID found"});
-      }
-
-      res.json(account);
+      //validateId places the account in req.account
+      res.json(req.account);
    } catch (error) {
       next(error);
    }
 });
 
 //Update
-server.put("/api/accounts/:id", validateAccountReq, async (req, res, next) => {
+server.put("/api/accounts/:id", validateId, validateAccountReq, async (req, res, next) => {
    try {
       //validateAccountReq places the payload in req.payload
       const numRecords = await db("accounts")
@@ -83,9 +92,12 @@ server.put("/api/accounts/:id", validateAccountReq, async (req, res, next) => {
 });
 
 //Delete
-server.delete("/api/accounts", async (req, res, next) => {
+server.delete("/api/accounts/:id", validateId, async (req, res, next) => {
    try {
-
+      const result = await db("accounts")
+         .where("id", req.params.id)
+         .delete();
+      res.json({message: "Account deleted!"});
    } catch (error) {
       next(error);
    }
