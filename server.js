@@ -33,7 +33,7 @@ server.get("/", (req, res, next) => {
 //Create
 server.post("/api/accounts", validateAccountReq, async (req, res, next) => {
    try {
-      //request payload is located in req.payload
+      //validateAccountReq places the payload in req.payload
       const [id] = await db("accounts").insert(req.payload);
       const account = await db("accounts").where("id", id).first();
       res.status(201).json(account);
@@ -45,7 +45,17 @@ server.post("/api/accounts", validateAccountReq, async (req, res, next) => {
 //Read
 server.get("/api/accounts", async (req, res, next) => {
    try {
+      const accounts = await db("accounts");
+      res.json(accounts);
+   } catch (error) {
+      next(error);
+   }
+});
 
+server.get("/api/accounts/:id", async (req, res, next) => {
+   try {
+      const account = await db("accounts").where("id", req.params.id).first();
+      res.json(account);
    } catch (error) {
       next(error);
    }
