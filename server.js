@@ -55,6 +55,11 @@ server.get("/api/accounts", async (req, res, next) => {
 server.get("/api/accounts/:id", async (req, res, next) => {
    try {
       const account = await db("accounts").where("id", req.params.id).first();
+
+      if (!account) {
+         return res.status(404).json({message: "No record with that ID found"});
+      }
+
       res.json(account);
    } catch (error) {
       next(error);
@@ -62,9 +67,16 @@ server.get("/api/accounts/:id", async (req, res, next) => {
 });
 
 //Update
-server.put("/api/accounts", async (req, res, next) => {
+server.put("/api/accounts/:id", validateAccountReq, async (req, res, next) => {
    try {
-
+      //validateAccountReq places the payload in req.payload
+      const numRecords = await db("accounts")
+         .update(req.payload)
+         .where("id", req.params.id);
+      const updatedRec = await db("accounts")
+         .where("id", req.params.id)
+         .first();
+      res.json(updatedRec);
    } catch (error) {
       next(error);
    }
